@@ -1,7 +1,12 @@
 // backend/server.js 
+require("dotenv").config();  // 👈 load .env first
+
 const express = require("express");
 const cors = require("cors");
 const { MongoClient, ObjectId } = require("mongodb");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+
 
 const app = express();
 
@@ -23,22 +28,31 @@ if (process.env.MONGO_URI) {
   console.log("💻 MongoDB MODE: LOCAL (Compass)");
 }
 
-console.log("🔗 MongoDB URL:", mongoURL.includes("mongodb+srv") ? "MongoDB Atlas SRV" : mongoURL);
+console.log(
+  "🔗 MongoDB URL:",
+  mongoURL.includes("mongodb+srv") ? "MongoDB Atlas SRV" : mongoURL
+);
 
+// 🔐 Admin JWT Secret (from .env)
+const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET;
+if (!ADMIN_JWT_SECRET) {
+  console.error("❌ ADMIN_JWT_SECRET missing in .env");
+  process.exit(1);
+}
 
 const dbName = "mysterysmile";
 let db;
+
 
 MongoClient.connect(mongoURL)
   .then(async (client) => {
     console.log("✅ Connected to MongoDB");
     db = client.db(dbName);
 
-    
     await initializePaymentSettings();
+    await initializeAdminUser();  // 🔐 create/check admin user
   })
   .catch((error) => console.error("MongoDB error:", error));
-
 
 
 /* ============================================
@@ -134,6 +148,34 @@ async function initializePaymentSettings() {
   console.log("✅ Payment settings migrated to arrays");
 }
 
+/* ============================================
+   INITIAL ADMIN USER
+============================================ */
+async function initializeAdminUser() {
+  const col = db.collection("adminSettings");
+  const existing = await col.findOne({ username: "admin" });
+
+  if (existing) {
+    console.log("✅ Admin user already exists");
+    return;
+  }
+
+  const defaultPassword = "MysteryAdmin@123";
+  const passwordHash = await bcrypt.hash(defaultPassword, 10);
+
+  await col.insertOne({
+    username: "admin",
+    passwordHash,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+
+  console.log("✅ Admin user created");
+  console.log("🔐 Default admin password:", defaultPassword);
+  console.log("⚠️ CHANGE THIS PASSWORD AFTER LOGIN");
+}
+
+
 /* Helper to always retrieve the one settings document */
 async function getPaymentSettingsDoc() {
   const col = db.collection("paymentSettings");
@@ -144,6 +186,124 @@ async function getPaymentSettingsDoc() {
   }
   return doc;
 }
+
+/* ============================================
+   ADMIN AUTH HELPERS
+============================================ */
+function generateAdminToken() {
+  return jwt.sign(
+    { role: "admin" },
+    ADMIN_JWT_SECRET,
+    { expiresIn: "2h" }
+  );
+}
+
+function adminAuthMiddleware(req, res, next) {
+  const header = req.headers.authorization || "";
+  const token = header.startsWith("Bearer ")
+    ? header.slice(7)
+    : null;
+
+  if (!token) {
+    return res.status(401).json({ error: "No token provided" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, ADMIN_JWT_SECRET);
+    if (decoded.role !== "admin") {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    req.admin = decoded;
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: "Invalid or expired token" });
+  }
+}
+
+/* ============================================
+   ADMIN LOGIN
+============================================ */
+app.post("/api/admin/login", async (req, res) => {
+  try {
+    const { password } = req.body;
+    if (!password) {
+      return res.status(400).json({ error: "Password required" });
+    }
+
+    const admin = await db
+      .collection("adminSettings")
+      .findOne({ username: "admin" });
+
+    if (!admin) {
+      return res.status(500).json({ error: "Admin not initialized" });
+    }
+
+    const ok = await bcrypt.compare(password, admin.passwordHash);
+    if (!ok) {
+      return res.status(401).json({ error: "Wrong password" });
+    }
+
+    const token = generateAdminToken();
+    res.json({ token });
+  } catch (err) {
+    console.error("Admin login error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+/* ============================================
+   ADMIN CHANGE PASSWORD
+============================================ */
+app.post(
+  "/api/admin/change-password",
+  adminAuthMiddleware,
+  async (req, res) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      if (!currentPassword || !newPassword) {
+        return res
+          .status(400)
+          .json({ error: "Both current and new password required" });
+      }
+
+      const col = db.collection("adminSettings");
+      const admin = await col.findOne({ username: "admin" });
+
+      if (!admin) {
+        return res.status(500).json({ error: "Admin not initialized" });
+      }
+
+      const match = await bcrypt.compare(
+        currentPassword,
+        admin.passwordHash
+      );
+
+      if (!match) {
+        return res
+          .status(401)
+          .json({ error: "Current password is incorrect" });
+      }
+
+      const newHash = await bcrypt.hash(newPassword, 10);
+
+      await col.updateOne(
+        { _id: admin._id },
+        {
+          $set: {
+            passwordHash: newHash,
+            updatedAt: new Date(),
+          },
+        }
+      );
+
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Change admin password error:", err);
+      res.status(500).json({ error: "Server error" });
+    }
+  }
+);
+
 
 /* ============================================
    GET PAYMENT METHODS

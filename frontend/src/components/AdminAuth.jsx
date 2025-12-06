@@ -1,19 +1,56 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 export default function AdminAuth({ children }) {
-  const [authenticated, setAuthenticated] = useState(
-    sessionStorage.getItem("admin_auth") === "true"
-  );
+  const [authenticated, setAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
-  function handleLogin(e) {
-    e.preventDefault();
-    if (password === "admin123") {
-      sessionStorage.setItem("admin_auth", "true");
+  const API_BASE_URL =
+    import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+
+  useEffect(() => {
+    const token = sessionStorage.getItem("admin_token");
+    if (token) {
       setAuthenticated(true);
-    } else {
-      alert("Wrong password");
     }
+  }, []);
+
+  async function handleLogin(e) {
+    e.preventDefault();
+    setError("");
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        setError(data.error || "Login failed");
+        return;
+      }
+
+      if (!data.token) {
+        setError("No token received");
+        return;
+      }
+
+      sessionStorage.setItem("admin_token", data.token);
+      setAuthenticated(true);
+      setPassword("");
+    } catch (err) {
+      console.error("Admin login error:", err);
+      setError("Network error");
+    }
+  }
+
+  function handleLogout() {
+    sessionStorage.removeItem("admin_token");
+    setAuthenticated(false);
+    setPassword("");
   }
 
   if (!authenticated) {
@@ -27,11 +64,15 @@ export default function AdminAuth({ children }) {
           <form onSubmit={handleLogin} className="space-y-4">
             <input
               type="password"
-              className="w-full px-4 py-3 rounded-lg bg-white bg-opacity-20 text-white placeholder-gray-300 focus:ring-2 focus:ring-purple-400 outline-none"
+              className="w-full px-4 py-3 rounded-lg bg-white bg-opacity-20 text-black placeholder-gray-300 focus:ring-2 focus:ring-purple-400 outline-none"
               placeholder="Enter Admin Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+
+            {error && (
+              <p className="text-red-300 text-sm text-center">{error}</p>
+            )}
 
             <button
               type="submit"
@@ -45,5 +86,18 @@ export default function AdminAuth({ children }) {
     );
   }
 
-  return children;
+  return (
+    <>
+      <div className="w-full bg-black/40 text-xs text-right pr-4 py-1 text-gray-200">
+        Logged in as Admin{" "}
+        <button
+          onClick={handleLogout}
+          className="underline text-purple-200 ml-2"
+        >
+          Logout
+        </button>
+      </div>
+      {children}
+    </>
+  );
 }

@@ -1,6 +1,7 @@
 /* ========================= src/pages/Admin.jsx ========================= */
 import React, { useEffect, useState } from "react";
 import Calendar from "react-calendar";
+import ChangeAdminPassword from "../components/ChangeAdminPassword";
 
 import {
   fetchBookings,
@@ -25,6 +26,9 @@ export default function Admin() {
   const [bookings, setBookings] = useState([]);
   // 🔹 SNAPSHOTS FOR DASHBOARD
 const [snapshots, setSnapshots] = useState([]);
+
+const [showAdminPasswordModal, setShowAdminPasswordModal] = useState(false);
+
 
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1441,6 +1445,20 @@ const handleDownloadFiltered = () =>
               ⬇ Download Filtered (.xls)
             </button>
           </div>
+
+          <button
+  onClick={() => setShowAdminPasswordModal(true)}
+  className="
+    px-4 py-2 rounded-lg
+    bg-gradient-to-r from-pink-500 to-purple-600
+    text-white text-xs sm:text-sm font-semibold
+    shadow hover:opacity-90
+  "
+>
+  🔒 Change Admin Password
+</button>
+
+
         </div>
 
         {/* FILTER BAR */}
@@ -2243,8 +2261,13 @@ const handleDownloadFiltered = () =>
           ) : tab === "payments" ? (
             renderPaymentMethods()
           ) : tab === "dashboard" ? (
-            renderDashboardBookings()
-          ) : (
+  <>
+    {renderDashboardBookings()}
+
+    
+  </>
+) : (
+
             renderAvailability()
           )}
         </div>
@@ -2282,6 +2305,37 @@ const handleDownloadFiltered = () =>
           </button>
         </div>
       )}
+
+      {showAdminPasswordModal && (
+  <div
+    className="fixed inset-0 z-[15000] bg-black/70 backdrop-blur-md
+               flex items-center justify-center px-4"
+    onClick={() => setShowAdminPasswordModal(false)}
+  >
+    <div
+      className="bg-slate-950/95 border border-purple-400/60
+                 rounded-2xl p-6 w-full max-w-md shadow-2xl"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-xl font-bold text-white">
+          Change Admin Password
+        </h3>
+
+        <button
+          onClick={() => setShowAdminPasswordModal(false)}
+          className="text-white text-lg font-bold hover:opacity-70"
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* SAME UI YOU ALREADY HAVE */}
+      <ChangeAdminPassword />
+    </div>
+  </div>
+)}
+
 
       {/* SERVICE MODAL (CREATE / EDIT) */}
       {serviceModal.open && (
