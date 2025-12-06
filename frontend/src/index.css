@@ -1,0 +1,120 @@
+/* ===================== TAILWIND ===================== */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&display=swap');
+@import "tailwindcss";
+
+/* ===================== FONTS ===================== */
+
+/* Additional custom styles to ensure full-screen layout and nice spacing */
+html, body, #root {
+  height: 100%;
+}
+
+/* Toast keyframes */
+@keyframes toastDrop {
+  0% { opacity: 0; transform: translate(-50%, -30px); }
+  100% { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.animate-toastDrop {
+  animation: toastDrop 0.35s ease-out;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) sepia(1) saturate(0) brightness(1000%);
+}
+
+
+/* ===================== DARK CALENDAR THEME ===================== */
+
+.mystery-calendar {
+  background: #0d0f1a !important;
+  border-radius: 20px;
+  color: #fff !important;
+  padding: 10px;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.mystery-calendar * {
+  max-width: 100% !important;
+  box-sizing: border-box;
+}
+
+.react-calendar__navigation button {
+  background: transparent !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.react-calendar__navigation button:disabled {
+  background: transparent !important;
+  color: #444 !important;
+}
+
+.react-calendar__month-view__weekdays__weekday {
+  color: #a29bfe !important;
+  font-weight: 600;
+  padding: 0.5rem 0;
+}
+
+.mystery-calendar-tile,
+.react-calendar__tile {
+  background: #111623 !important;
+  color: #ffffff !important;
+  border-radius: 8px !important;
+  transition: 0.15s ease;
+}
+
+.react-calendar__tile:hover {
+  background: #1e2638 !important;
+}
+
+.react-calendar__tile--active {
+  background: #4c1d95 !important;
+  color: #fff !important;
+  font-weight: bold;
+}
+
+.mystery-calendar-tile-available {
+  background: #14532d !important;
+  color: #a7f3d0 !important;
+  font-weight: bold;
+}
+
+.mystery-calendar-tile-past {
+  background: #1a1a1a !important;
+  color: #444 !important;
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.react-calendar__tile--now {
+  background: #111623 !important;
+  color: #fff !important;
+  border: 1px solid #4c1d95 !important;
+}
+
+.booking-date-available {
+  background-color: #16a34a !important;
+  color: #ffffff !important;
+  border-radius: 9999px;
+  font-weight: 600;
+}
+
+.booking-date-available:enabled:hover {
+  filter: brightness(1.1);
+}
+
+.booking-date-unavailable {
+  background-color: #e5e7eb !important;
+  color: #9ca3af !important;
+  border-radius: 9999px;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(196, 181, 253, 0.8);
+}
+
+/* End of file */
