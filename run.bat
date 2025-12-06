@@ -1,12 +1,17 @@
 @echo off
-echo 🚀 Starting Mystery Smile App (Smart Mode)...
+chcp 65001 >nul
+
+echo ======================================
+echo Starting Mystery Smile (DEV MODE)
+echo ======================================
 
 REM ---------- BACKEND ----------
-echo 🔧 Backend setup...
+echo.
+echo [BACKEND]
 cd backend
 
 IF NOT EXIST node_modules (
-    echo 📦 Installing backend dependencies...
+    echo Installing backend dependencies...
     npm install
 )
 
@@ -14,15 +19,23 @@ start cmd /k "node server.js"
 cd ..
 
 REM ---------- FRONTEND ----------
-echo 🎨 Frontend setup...
+echo.
+echo [FRONTEND]
 cd frontend
 
 IF NOT EXIST node_modules (
-    echo 📦 Installing frontend dependencies...
+    echo Installing frontend dependencies...
     npm install
 )
 
 start cmd /k "npm run dev"
 cd ..
 
-echo ✅ App started successfully!
+echo.
+echo App started successfully!
+echo Frontend : http://localhost:5173
+echo Admin    : http://localhost:5173/admin
+echo Backend  : http://localhost:5000
+echo ======================================
+
+pause
