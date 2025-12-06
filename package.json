@@ -1,0 +1,12 @@
+{
+  "name": "mystery-smile-app",
+  "private": true,
+  "scripts": {
+    "app": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "backend": "cd backend && npm install && node server.js",
+    "frontend": "cd frontend && npm install && npm run dev"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
