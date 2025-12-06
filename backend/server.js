@@ -17,6 +17,15 @@ app.use(express.urlencoded({ limit: "50mb", extended: true }));
 --------------------------------------------*/
 const mongoURL = process.env.MONGO_URI || "mongodb://localhost:27017";
 
+if (process.env.MONGO_URI) {
+  console.log("🌍 MongoDB MODE: ATLAS (Cloud)");
+} else {
+  console.log("💻 MongoDB MODE: LOCAL (Compass)");
+}
+
+console.log("🔗 MongoDB URL:", mongoURL.includes("mongodb+srv") ? "MongoDB Atlas SRV" : mongoURL);
+
+
 const dbName = "mysterysmile";
 let db;
 
