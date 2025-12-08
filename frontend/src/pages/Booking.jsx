@@ -34,10 +34,9 @@ export default function Booking() {
   const [calendarValue, setCalendarValue] = useState(new Date())
 
   const attemptExitToHome = () => {
-  setShowExitModal(true);
-  return; // Stop immediate navigation
-};
-
+    setShowExitModal(true)
+    return // Stop immediate navigation
+  }
 
   // ---------------- PAYMENT METHODS (FROM ADMIN) ----------------
   const [paymentMethods, setPaymentMethods] = useState({
@@ -125,6 +124,78 @@ export default function Booking() {
     }
   }
 
+  function ContactDropdown({ value, onChange }) {
+  const [open, setOpen] = React.useState(false)
+
+  const options = [
+    { value: 'whatsapp', label: 'WhatsApp' },
+    { value: 'instagram', label: 'Instagram' },
+  ]
+
+  const selected = options.find(o => o.value === value)
+
+  return (
+    <div className="relative">
+      {/* Selected box */}
+      <button
+        type="button"
+        onClick={() => setOpen(prev => !prev)}
+        className="
+          w-full flex items-center justify-between
+          px-3 py-2
+          text-sm
+          rounded-lg
+          bg-white
+          border border-black/40
+          text-black
+          focus:outline-none
+          focus:ring-1 focus:ring-yellow-400
+        "
+      >
+        <span>{selected?.label}</span>
+        <span className="text-xs text-black/60">▼</span>
+      </button>
+
+      {/* Dropdown */}
+      {open && (
+        <div
+          className="
+            absolute z-50 mt-1 w-full
+            rounded-lg
+            bg-white
+            border border-black/20
+            shadow-lg
+            overflow-hidden
+          "
+        >
+          {options.map(opt => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => {
+                onChange(opt.value)
+                setOpen(false)
+              }}
+              className={`
+                w-full text-left px-3 py-2 text-sm
+                hover:bg-yellow-100
+                ${
+                  value === opt.value
+                    ? 'bg-yellow-50 font-semibold'
+                    : ''
+                }
+              `}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+
   // ---------------- LOAD SERVICE + PAYMENT METHODS ----------------
   useEffect(() => {
     ;(async () => {
@@ -182,16 +253,15 @@ export default function Booking() {
   }, [])
 
   // ---------------- EXIT HANDLER FOR NAVBAR (Logo / Home) ----------------
-useEffect(() => {
-  window.onBookingExitAttempt = () => {
-    setShowExitModal(true);  // shows same popup
-  };
+  useEffect(() => {
+    window.onBookingExitAttempt = () => {
+      setShowExitModal(true) // shows same popup
+    }
 
-  return () => {
-    window.onBookingExitAttempt = null; // cleanup
-  };
-}, []);
-
+    return () => {
+      window.onBookingExitAttempt = null // cleanup
+    }
+  }, [])
 
   // ---------------- INPUT CHANGE ----------------
   const handleInputChange = (e) => {
@@ -268,10 +338,9 @@ useEffect(() => {
     }
 
     if (clientImages.length === 0) {
-  showToast('Please upload at least one client image.', 'error')
-  return
-}
-
+      showToast('Please upload at least one client image.', 'error')
+      return
+    }
 
     try {
       const booking = {
@@ -283,10 +352,10 @@ useEffect(() => {
         instaId: contactMode === 'instagram' ? formData.instaId : null,
         contactMode,
         service: {
-  id: service._id || service.id,
-  name: service.name,          // permanent
-  category: service.category,  // permanent
-},
+          id: service._id || service.id,
+          name: service.name, // permanent
+          category: service.category, // permanent
+        },
 
         selectedDate,
         tags: [],
@@ -337,40 +406,36 @@ useEffect(() => {
 
       <div className="container mx-auto px-6 max-w-2xl">
         <div className="bg-white rounded-2xl shadow-2xl p-8 mt-8">
-          {/* BACK BUTTON */}
           {/* HEADER ROW: back button + centered title */}
-<div className="flex items-center justify-center relative mb-6">
-
-  {/* Smaller Back Button (left aligned) */}
-  <button
-    type="button"
-    onClick={() => setShowExitModal(true)}
-    className="absolute left-0 bg-red-500 text-white font-semibold px-3 py-1.5 
+          <div className="flex items-center justify-center relative mb-6">
+            {/* Smaller Back Button (left aligned) */}
+            <button
+              type="button"
+              onClick={() => setShowExitModal(true)}
+              className="absolute left-0 bg-red-500 text-white font-semibold px-3 py-1.5 
                rounded-xl hover:bg-red-600 transition text-sm"
-  >
-    ⟵
-  </button>
+            >
+              ⟵
+            </button>
 
-  {/* Title centered regardless of button width */}
-  <h3 className="text-lg sm:text-xl font-bold text-black text-center">
-    {service.name}
-  </h3>
-</div>
-
+            {/* Title centered regardless of button width */}
+            <h3 className="text-lg sm:text-xl font-bold text-black text-center">
+              {service.name}
+            </h3>
+          </div>
 
           {/* DESCRIPTION */}
           <div className="relative mb-6 rounded-2xl p-6 bg-gray-700/20 backdrop-blur-xl border border-white/10 shadow-xl">
-  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-purple-500/20 via-pink-300/20 to-yellow-300/20 blur-2xl pointer-events-none"></div>
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-purple-500/20 via-pink-300/20 to-yellow-300/20 blur-2xl pointer-events-none"></div>
 
-  <div className="relative">
-    <h4 className="text-black font-semibold mb-2">Description:</h4>
+            <div className="relative">
+              <h4 className="text-black font-semibold mb-2">Description:</h4>
 
-    <p className="text-black/80 text-left text-[11px] leading-[1.35] sm:text-base">
-      {service.description}
-    </p>
-  </div>
-</div>
-
+              <p className="text-black/80 text-left text-[11px] leading-[1.35] sm:text-base">
+                {service.description}
+              </p>
+            </div>
+          </div>
 
           {/* DATES */}
           <div className="mb-6">
@@ -413,11 +478,13 @@ useEffect(() => {
             )}
           </div>
 
-          {/* FORM */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {/* FORM (SMALLER FONT ON PHONE) */}
+          <form onSubmit={handleSubmit} className="space-y-4 text-sm">
             {/* FULL NAME */}
             <div>
-              <label className="block text-black mb-2">Full Name</label>
+              <label className="block text-black mb-1 text-xs sm:text-sm">
+                Full Name
+              </label>
               <input
                 type="text"
                 name="fullName"
@@ -425,33 +492,35 @@ useEffect(() => {
                 onChange={handleInputChange}
                 required
                 placeholder="Enter your full name"
-                className="w-full px-4 py-3 rounded-lg bg-white border border-black/40 text-black focus:outline-none focus:ring-2 focus:ring-yellow-300"
+                className="w-full px-3 py-2 rounded-lg bg-white border border-black/40 text-black text-sm focus:outline-none focus:ring-2 focus:ring-yellow-300"
               />
             </div>
 
             {/* CONTACT METHOD */}
-            <div className="mb-4">
-              <label className="block text-black mb-2 font-semibold">
-                Preferred Contact Method
-              </label>
+            <div className="mb-2">
+              
+  <div className="relative">
+    <div className="mb-3">
+  <label className="block text-black mb-1 text-xs font-medium">
+    Preferred Contact Method
+  </label>
 
-              <select
-                value={contactMode}
-                onChange={(e) => setContactMode(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg bg-white border border-black/40 text-black focus:outline-none focus:ring-2 focus:ring-yellow-300"
-              >
-                <option value="whatsapp">WhatsApp</option>
-                <option value="instagram">Instagram</option>
-              </select>
-            </div>
-
+  <ContactDropdown
+    value={contactMode}
+    onChange={setContactMode}
+  />
+</div>
+  </div>
+</div>
             {/* CONDITIONAL WHATSAPP FIELD */}
             {contactMode === 'whatsapp' && (
               <div>
-                <label className="block text-black mb-2">WhatsApp Number</label>
+                <label className="block text-black mb-1 text-xs sm:text-sm">
+                  WhatsApp Number
+                </label>
                 <div className="flex gap-2">
-                  <div className="flex items-center w-24 px-3 py-3 rounded-lg bg-white border border-black/40 text-black">
-                    <span className="text-black mr-1">+</span>
+                  <div className="flex items-center w-24 px-2.5 py-2 rounded-lg bg-white border border-black/40 text-black">
+                    <span className="text-black mr-1 text-sm">+</span>
                     <input
                       type="tel"
                       name="countryCode"
@@ -464,7 +533,7 @@ useEffect(() => {
                       }
                       placeholder="91"
                       maxLength={5}
-                      className="w-full bg-transparent text-black focus:outline-none"
+                      className="w-full bg-transparent text-black text-sm focus:outline-none"
                     />
                   </div>
 
@@ -479,7 +548,7 @@ useEffect(() => {
                       })
                     }
                     placeholder="Enter phone number"
-                    className="w-full px-4 py-3 rounded-lg bg-white border border-black/40 text-black focus:outline-none focus:ring-2 focus:ring-yellow-300"
+                    className="w-full px-3 py-2 rounded-lg bg-white border border-black/40 text-black text-sm focus:outline-none focus:ring-2 focus:ring-yellow-300"
                   />
                 </div>
               </div>
@@ -488,10 +557,12 @@ useEffect(() => {
             {/* INSTAGRAM FIELD */}
             {contactMode === 'instagram' && (
               <div>
-                <label className="block text-black mb-2">Instagram ID</label>
+                <label className="block text-black mb-1 text-xs sm:text-sm">
+                  Instagram ID
+                </label>
 
-                <div className="flex items-center px-4 py-3 rounded-lg bg-white border border-black/40 text-black">
-                  <span className="text-black mr-1">@</span>
+                <div className="flex items-center px-3 py-2 rounded-lg bg-white border border-black/40 text-black">
+                  <span className="text-black mr-1 text-sm">@</span>
                   <input
                     type="text"
                     name="instaId"
@@ -503,7 +574,7 @@ useEffect(() => {
                       })
                     }
                     placeholder="yourhandle"
-                    className="flex-1 bg-transparent text-black focus:outline-none"
+                    className="flex-1 bg-transparent text-black text-sm focus:outline-none"
                   />
                 </div>
               </div>
@@ -511,7 +582,9 @@ useEffect(() => {
 
             {/* EMAIL */}
             <div>
-              <label className="block text-black mb-2">Email Address</label>
+              <label className="block text-black mb-1 text-xs sm:text-sm">
+                Email Address
+              </label>
               <input
                 type="email"
                 name="email"
@@ -519,13 +592,15 @@ useEffect(() => {
                 onChange={handleInputChange}
                 required
                 placeholder="Enter your email"
-                className="w-full px-4 py-3 rounded-lg bg-white border border-black/40 text-black focus:outline-none focus:ring-2 focus:ring-yellow-300"
+                className="w-full px-3 py-2 rounded-lg bg-white border border-black/40 text-black text-sm focus:outline-none focus:ring-2 focus:ring-yellow-300"
               />
             </div>
 
             {/* ADDRESS */}
             <div>
-              <label className="block text-black mb-2">Current Address</label>
+              <label className="block text-black mb-1 text-xs sm:text-sm">
+                Current Address
+              </label>
               <textarea
                 rows="3"
                 name="address"
@@ -533,26 +608,26 @@ useEffect(() => {
                 onChange={handleInputChange}
                 required
                 placeholder="Enter your current address"
-                className="w-full px-4 py-3 rounded-lg bg-white border border-black/40 text-black focus:outline-none focus:ring-2 focus:ring-yellow-300"
+                className="w-full px-3 py-2 rounded-lg bg-white border border-black/40 text-black text-sm focus:outline-none focus:ring-2 focus:ring-yellow-300"
               ></textarea>
             </div>
 
             {/* -------- CLIENT IMAGES (REFERENCE) -------- */}
-            <div className="mt-4">
-              <label className="block text-black mb-2 font-semibold">
+            <div className="mt-3">
+              <label className="block text-black mb-1 font-semibold text-xs sm:text-sm">
                 UPLOAD YOUR FACE IMAGE (REQUIRED)
               </label>
-              <p className="text-xs text-gray-600 mb-2">
+              <p className="text-[11px] text-gray-600 mb-2">
                 If there are multiple people included in this reading or spell,
                 please upload a clear image of each person.
               </p>
 
-              <label className="flex flex-col items-center justify-center w-full border-2 border-dashed border-gray-300 rounded-xl px-4 py-6 bg-white hover:border-purple-400 cursor-pointer transition">
+              <label className="flex flex-col items-center justify-center w-full border-2 border-dashed border-gray-300 rounded-xl px-4 py-5 bg-white hover:border-purple-400 cursor-pointer transition">
                 <div className="flex flex-col items-center gap-1">
-                  <div className="w-10 h-10 rounded-full border border-purple-500 flex items-center justify-center text-purple-600 text-2xl font-bold">
+                  <div className="w-9 h-9 rounded-full border border-purple-500 flex items-center justify-center text-purple-600 text-xl font-bold">
                     +
                   </div>
-                  <span className="text-sm font-semibold text-black">
+                  <span className="text-xs sm:text-sm font-semibold text-black">
                     Click to add image(s)
                   </span>
                   <span className="text-[11px] text-gray-500">
@@ -602,12 +677,12 @@ useEffect(() => {
             </div>
 
             {/* -------- PAYMENT SELECTION -------- */}
-            <div className="mt-6">
-              <label className="block text-black mb-2 font-semibold">
+            <div className="mt-5">
+              <label className="block text-black mb-1 font-semibold text-xs sm:text-sm">
                 Payment Option
               </label>
 
-              <p className="text-sm text-gray-600 mb-3">
+              <p className="text-[11px] sm:text-xs text-gray-600 mb-3">
                 Choose how you would like to pay.{' '}
                 <span className="font-semibold">
                   (eSewa and Bank: for Nepali citizens only)
@@ -620,7 +695,7 @@ useEffect(() => {
                   <button
                     type="button"
                     onClick={() => setPaymentChoice('PAYPAL')}
-                    className={`w-full text-left rounded-xl border px-4 py-3 bg-white flex flex-col gap-2 transition ${
+                    className={`w-full text-left rounded-xl border px-3 py-3 bg-white flex flex-col gap-2 transition text-sm ${
                       paymentChoice === 'PAYPAL'
                         ? 'border-blue-500 shadow-[0_0_0_2px_rgba(37,99,235,0.4)]'
                         : 'border-black/20 hover:border-blue-400 hover:shadow-md'
@@ -632,14 +707,14 @@ useEffect(() => {
                       </div>
                       <div>
                         <div className="font-semibold text-black">PayPal</div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-[11px] text-gray-500">
                           International Payments
                         </div>
                       </div>
                     </div>
 
                     {paymentChoice === 'PAYPAL' && activePaypal && (
-                      <div className="mt-2 border-t border-gray-200 pt-2 text-xs text-gray-700">
+                      <div className="mt-2 border-t border-gray-200 pt-2 text-[11px] text-gray-700">
                         {activePaypal.email && (
                           <div className="mb-1">
                             <span className="font-semibold">Email: </span>
@@ -671,7 +746,7 @@ useEffect(() => {
                   <button
                     type="button"
                     onClick={() => setPaymentChoice('ESEWA')}
-                    className={`w-full text-left rounded-xl border px-4 py-3 bg-white flex flex-col gap-2 transition ${
+                    className={`w-full text-left rounded-xl border px-3 py-3 bg-white flex flex-col gap-2 transition text-sm ${
                       paymentChoice === 'ESEWA'
                         ? 'border-emerald-500 shadow-[0_0_0_2px_rgba(16,185,129,0.4)]'
                         : 'border-black/20 hover:border-emerald-400 hover:shadow-md'
@@ -683,14 +758,14 @@ useEffect(() => {
                       </div>
                       <div>
                         <div className="font-semibold text-black">eSewa</div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-[11px] text-gray-500">
                           Nepali Citizen Only
                         </div>
                       </div>
                     </div>
 
                     {paymentChoice === 'ESEWA' && activeEsewa && (
-                      <div className="mt-2 border-t border-gray-200 pt-2 text-xs text-gray-700">
+                      <div className="mt-2 border-t border-gray-200 pt-2 text-[11px] text-gray-700">
                         {activeEsewa.esewaId && (
                           <div className="mb-1">
                             <span className="font-semibold">eSewa ID: </span>
@@ -729,7 +804,7 @@ useEffect(() => {
                   <button
                     type="button"
                     onClick={() => setPaymentChoice('BANK')}
-                    className={`w-full text-left rounded-xl border px-4 py-3 bg-white flex flex-col gap-2 transition ${
+                    className={`w-full text-left rounded-xl border px-3 py-3 bg-white flex flex-col gap-2 transition text-sm ${
                       paymentChoice === 'BANK'
                         ? 'border-yellow-500 shadow-[0_0_0_2px_rgba(234,179,8,0.45)]'
                         : 'border-black/20 hover:border-yellow-400 hover:shadow-md'
@@ -741,14 +816,14 @@ useEffect(() => {
                       </div>
                       <div>
                         <div className="font-semibold text-black">Bank</div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-[11px] text-gray-500">
                           Nepali Citizen Only
                         </div>
                       </div>
                     </div>
 
                     {paymentChoice === 'BANK' && activeBank && (
-                      <div className="mt-2 border-t border-gray-200 pt-2 text-xs text-gray-700">
+                      <div className="mt-2 border-t border-gray-200 pt-2 text-[11px] text-gray-700">
                         {activeBank.bankName && (
                           <div className="mb-1">
                             <span className="font-semibold">Bank: </span>
@@ -804,21 +879,21 @@ useEffect(() => {
             </div>
 
             {/* -------- PAYMENT PROOF UPLOAD -------- */}
-            <div className="mt-4">
-              <label className="block text-black mb-2 font-semibold">
+            <div className="mt-3">
+              <label className="block text-black mb-1 font-semibold text-xs sm:text-sm">
                 Upload Payment Proof (Required)
               </label>
-              <p className="text-xs text-gray-600 mb-2">
+              <p className="text-[11px] text-gray-600 mb-2">
                 After sending the payment, please upload a clear screenshot or
                 photo of your payment confirmation / receipt.
               </p>
 
-              <label className="flex flex-col items-center justify-center w-full border-2 border-dashed border-gray-300 rounded-xl px-4 py-6 bg-white hover:border-green-500 cursor-pointer transition">
+              <label className="flex flex-col items-center justify-center w-full border-2 border-dashed border-gray-300 rounded-xl px-4 py-5 bg-white hover:border-green-500 cursor-pointer transition">
                 <div className="flex flex-col items-center gap-1">
-                  <div className="w-10 h-10 rounded-full border border-green-500 flex items-center justify-center text-green-600 text-2xl font-bold">
+                  <div className="w-9 h-9 rounded-full border border-green-500 flex items-center justify-center text-green-600 text-xl font-bold">
                     +
                   </div>
-                  <span className="text-sm font-semibold text-black">
+                  <span className="text-xs sm:text-sm font-semibold text-black">
                     Click to add payment proof image(s)
                   </span>
                   <span className="text-[11px] text-gray-500">
@@ -868,21 +943,24 @@ useEffect(() => {
             </div>
 
             {/* BUTTONS */}
-            <div className="flex gap-4 mt-6">
-              <button
-                type="submit"
-                className="flex-1 bg-gradient-to-r from-yellow-400 to-pink-500 text-black font-bold py-3 rounded-lg hover:scale-105 transition"
-              >
-                Submit Booking
-              </button>
+            <div className="flex gap-4 mt-5">
 
               <button
                 type="button"
                 onClick={() => setShowExitModal(true)}
-                className="flex-1 bg-gray-600 text-white font-bold py-3 rounded-lg hover:bg-gray-700 transition"
+                className="flex-1 bg-[#ef1727] text-white font-bold py-2.5 rounded-lg hover:bg-gray-700 transition text-sm sm:text-base"
               >
                 Cancel
               </button>
+
+              <button
+                type="submit"
+                className="flex-1 bg-[#49963a] text-white font-bold py-2.5 rounded-lg hover:scale-105 transition text-sm sm:text-base"
+              >
+                Submit Booking
+              </button>
+
+              
             </div>
           </form>
         </div>
@@ -925,7 +1003,7 @@ useEffect(() => {
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl p-8 w-full max-w-md text-white">
-            <h2 className="text-3xl font-bold text-yellow-300 mb-3 text-center">
+            <h2 className="text-3xl font-bold text-[#10d102] mb-3 text-center">
               Booking Successful!
             </h2>
             <p className="text-gray-200 text-center mb-6">
@@ -936,7 +1014,7 @@ useEffect(() => {
             <div className="flex justify-center">
               <button
                 onClick={() => navigate('/', { replace: true })}
-                className="px-6 py-3 bg-gradient-to-r from-yellow-400 to-pink-500 text-black font-bold rounded-lg hover:scale-105 transition active:scale-95"
+                className="px-6 py-3 bg-[#26771d] text-white font-bold rounded-lg hover:scale-105 transition active:scale-95"
               >
                 OK
               </button>
