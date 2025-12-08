@@ -182,3 +182,56 @@ export async function fetchBookingSnapshots() {
   return res.json();
 }
 
+// ================= ADMIN PASSWORD RESET =================
+
+export async function sendAdminOtp(email) {
+  const res = await fetch(
+    `${API_BASE}/admin/forgot-password`,
+
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    }
+  );
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to send OTP");
+  return data;
+}
+
+export async function resetAdminPassword(otp, newPassword) {
+  const res = await fetch(
+    `${API_BASE}/admin/reset-password`,
+
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ otp, newPassword }),
+    }
+  );
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to reset password");
+  return data;
+}
+
+export async function changePasswordSecure(currentPassword, newPassword, otp) {
+  const token = sessionStorage.getItem("admin_token");
+
+  const res = await fetch(
+    `${API_BASE}/admin/change-password-secure`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ currentPassword, newPassword, otp }),
+    }
+  );
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to change password");
+  return data;
+}

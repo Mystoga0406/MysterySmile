@@ -27,6 +27,7 @@ export default function Admin() {
   // 🔹 SNAPSHOTS FOR DASHBOARD
 const [snapshots, setSnapshots] = useState([]);
 
+
 const [showAdminPasswordModal, setShowAdminPasswordModal] = useState(false);
 
 
@@ -48,6 +49,10 @@ const [showAdminPasswordModal, setShowAdminPasswordModal] = useState(false);
     // 🔹 NEW: Dashboard filters
   const [dashSearch, setDashSearch] = useState("");
   const [dashServiceFilter, setDashServiceFilter] = useState("all"); // all | TAROT | SPELL
+  // 🔹 NEW: Payment method filter
+const [dashPaymentFilter, setDashPaymentFilter] = useState("all"); 
+// all | PAYPAL | ESEWA | BANK
+
 
   // Separate ranges for Booked On vs Booked For
   const [dashBookedOnStart, setDashBookedOnStart] = useState("");   // createdAt from
@@ -584,6 +589,7 @@ const [showAdminPasswordModal, setShowAdminPasswordModal] = useState(false);
     "Instagram",
     "Service Name",
     "Category",
+    "Payment Method",
     "Price USD",
     "Price NPR",
     "Price INR",
@@ -604,7 +610,9 @@ const [showAdminPasswordModal, setShowAdminPasswordModal] = useState(false);
       b.createdAt || b.date || b.bookingDate || b.selectedDate
     );
 
-    const bookedForRaw = b.date || b.bookingDate || b.selectedDate;
+    const bookedForRaw =
+  b.bookedFor || b.date || b.bookingDate || b.selectedDate;
+
     const bookedForText = bookedForRaw ? formatDateOnly(bookedForRaw) : "";
 
     const category =
@@ -627,6 +635,7 @@ const [showAdminPasswordModal, setShowAdminPasswordModal] = useState(false);
       b.instaId || "",
       b.service?.name || b.serviceName || "",
       category || "",
+      (b.paymentMethod || "").toString(),
       b.priceUsd || "",
       b.priceNpr || "",
       b.priceInr || "",
@@ -1078,6 +1087,17 @@ const BookingCard = ({ b, showImages = true, noStatusChange = false, noDelete = 
       {open && (
         <div className="px-6 pb-6 pt-2 space-y-4 text-[12px] sm:text-sm text-purple-200">
           <div className="flex flex-wrap gap-4">
+
+          {/* PAYMENT METHOD (ONLY FOR WELCOME ADMIN) */}
+            {noStatusChange && (
+              <span className="block">
+                <strong>Payment Method:</strong>{" "}
+                <span className="text-green-300 font-semibold">
+                  {b.paymentMethod || b.payment?.type || "Unknown"}
+                </span>
+              </span>
+            )}
+
             <span>
               <strong>Booked On:</strong> {formatDateTime(b.createdAt)}
             </span>
@@ -1128,8 +1148,14 @@ const BookingCard = ({ b, showImages = true, noStatusChange = false, noDelete = 
             b.paymentProofImages.length > 0 && (
               <div className="mt-5">
                 <strong className="block mb-2 text-green-300">
-                  Payment Proof:
-                </strong>
+  Payment Proof:{" "}
+  <span className="font-semibold text-green-200">
+    {(b.paymentMethod || b.payment?.type || "Unknown")
+  .toLowerCase()
+  .replace(/^\w/, c => c.toUpperCase())}
+  </span>
+</strong>
+
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                   {b.paymentProofImages.map((img, index) => (
                     <div
@@ -1346,6 +1372,135 @@ const BookingCard = ({ b, showImages = true, noStatusChange = false, noDelete = 
     );
   };
 
+  const ServiceFilterDropdown = ({ value, onChange }) => {
+  const [open, setOpen] = useState(false);
+
+  const options = [
+    { label: "All Services", value: "all" },
+    { label: "Tarot", value: "TAROT" },
+    { label: "Spell", value: "SPELL" },
+  ];
+
+  const current =
+    options.find((o) => o.value === value)?.label || "All Services";
+
+  return (
+    <div className="relative inline-block">
+      <button
+        onClick={() => setOpen((p) => !p)}
+        className="
+          px-3 py-2 rounded-xl
+          bg-black
+          text-white text-xs sm:text-sm
+          border border-purple-300/60
+          flex items-center gap-2 min-w-[130px]
+          focus:outline-none focus:ring-2 focus:ring-yellow-400
+        "
+      >
+        {current}
+        <span className="ml-auto text-xs">{open ? "⯅" : "⯆"}</span>
+      </button>
+
+      {open && (
+        <div
+          className="
+            absolute left-0 mt-1 w-full
+            bg-black/90 backdrop-blur-xl
+            border border-purple-300/40
+            rounded-xl overflow-hidden
+            shadow-2xl z-[9999]
+          "
+        >
+          {options
+            .filter((o) => o.value !== value)
+            .map((o) => (
+              <div
+                key={o.value}
+                onClick={() => {
+                  onChange(o.value);
+                  setOpen(false);
+                }}
+                className="
+                  px-3 py-2 cursor-pointer
+                  hover:bg-white/10
+                  text-xs sm:text-sm text-white
+                "
+              >
+                {o.label}
+              </div>
+            ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+
+const PaymentFilterDropdown = ({ value, onChange }) => {
+  const [open, setOpen] = useState(false);
+
+  const options = [
+    { label: "All Payments", value: "all" },
+    { label: "PayPal", value: "PAYPAL" },
+    { label: "eSewa", value: "ESEWA" },
+    { label: "Bank", value: "BANK" },
+  ];
+
+  const current =
+    options.find((o) => o.value === value)?.label || "All Payments";
+
+  return (
+    <div className="relative inline-block">
+      <button
+        onClick={() => setOpen((p) => !p)}
+        className="
+          px-3 py-2 rounded-xl
+          bg-black
+          text-white text-xs sm:text-sm
+          border border-purple-300/60
+          flex items-center gap-2 min-w-[140px]
+          focus:outline-none focus:ring-2 focus:ring-yellow-400
+        "
+      >
+        {current}
+        <span className="ml-auto text-xs">{open ? "⯅" : "⯆"}</span>
+      </button>
+
+      {open && (
+        <div
+          className="
+            absolute left-0 mt-1 w-full
+            bg-black/90 backdrop-blur-xl
+            border border-purple-300/40
+            rounded-xl overflow-hidden
+            shadow-2xl z-[9999]
+          "
+        >
+          {options
+            .filter((o) => o.value !== value)
+            .map((o) => (
+              <div
+                key={o.value}
+                onClick={() => {
+                  onChange(o.value);
+                  setOpen(false);
+                }}
+                className="
+                  px-3 py-2 cursor-pointer
+                  hover:bg-white/10
+                  text-xs sm:text-sm text-white
+                "
+              >
+                {o.label}
+              </div>
+            ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+
     /* ------------------ RENDER DASHBOARD (LATEST 10) ------------------ */
 
   const renderDashboardBookings = () => {
@@ -1378,6 +1533,15 @@ const BookingCard = ({ b, showImages = true, noStatusChange = false, noDelete = 
   if (snapCategory !== dashServiceFilter) return false;
 }
 
+// PAYMENT METHOD FILTER
+if (dashPaymentFilter !== "all") {
+  const method =
+    (b.paymentMethod || "")
+      .toString()
+      .toUpperCase();
+
+  if (!method.includes(dashPaymentFilter)) return false;
+}
 
 
         // DATE FILTERS
@@ -1477,21 +1641,17 @@ const handleDownloadFiltered = () =>
           />
 
           {/* SERVICE DROPDOWN (transparent / premium) */}
-          <select
-            className="
-              px-3 py-2 rounded-xl
-              bg-black
-              text-white text-xs sm:text-sm
-              border border-purple-300/60
-              focus:outline-none focus:ring-2 focus:ring-yellow-400
-            "
-            value={dashServiceFilter}
-            onChange={(e) => setDashServiceFilter(e.target.value)}
-          >
-            <option value="all">All Services</option>
-            <option value="TAROT">Tarot</option>
-            <option value="SPELL">Spell</option>
-          </select>
+         <ServiceFilterDropdown
+  value={dashServiceFilter}
+  onChange={setDashServiceFilter}
+/>
+
+<PaymentFilterDropdown
+  value={dashPaymentFilter}
+  onChange={setDashPaymentFilter}
+/>
+
+
 
           {/* FILTER ICON BUTTON (opens center popup) */}
           <button
@@ -1549,6 +1709,8 @@ const handleDownloadFiltered = () =>
     priceUsd: snap.priceUsd,
     priceNpr: snap.priceNpr,
     priceInr: snap.priceInr,
+
+    paymentMethod: snap.paymentMethod || "Unknown",
 
     // no images in dashboard
     clientImages: [],
@@ -2850,6 +3012,8 @@ const handleDownloadFiltered = () =>
                   setDashBookedOnEnd("");
                   setDashBookedForStart("");
                   setDashBookedForEnd("");
+                  setDashServiceFilter("all");
+                  setDashPaymentFilter("all");
                 }}
                 className="px-4 py-2 rounded-lg bg-slate-700 text-white text-sm hover:bg-slate-600"
               >

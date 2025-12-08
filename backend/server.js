@@ -6,6 +6,16 @@ const cors = require("cors");
 const { MongoClient, ObjectId } = require("mongodb");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const nodemailer = require("nodemailer");
+
+const emailTransporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
 
 
 const app = express();
@@ -252,57 +262,111 @@ app.post("/api/admin/login", async (req, res) => {
 });
 
 /* ============================================
-   ADMIN CHANGE PASSWORD
+   ADMIN FORGOT PASSWORD (SEND OTP)
 ============================================ */
-app.post(
-  "/api/admin/change-password",
-  adminAuthMiddleware,
-  async (req, res) => {
-    try {
-      const { currentPassword, newPassword } = req.body;
-      if (!currentPassword || !newPassword) {
-        return res
-          .status(400)
-          .json({ error: "Both current and new password required" });
-      }
+app.post("/api/admin/forgot-password", async (req, res) => {
+  try {
+    const adminEmail = process.env.ADMIN_EMAIL;
 
-      const col = db.collection("adminSettings");
-      const admin = await col.findOne({ username: "admin" });
-
-      if (!admin) {
-        return res.status(500).json({ error: "Admin not initialized" });
-      }
-
-      const match = await bcrypt.compare(
-        currentPassword,
-        admin.passwordHash
-      );
-
-      if (!match) {
-        return res
-          .status(401)
-          .json({ error: "Current password is incorrect" });
-      }
-
-      const newHash = await bcrypt.hash(newPassword, 10);
-
-      await col.updateOne(
-        { _id: admin._id },
-        {
-          $set: {
-            passwordHash: newHash,
-            updatedAt: new Date(),
-          },
-        }
-      );
-
-      res.json({ success: true });
-    } catch (err) {
-      console.error("Change admin password error:", err);
-      res.status(500).json({ error: "Server error" });
+    if (!adminEmail) {
+      return res.status(500).json({ error: "Admin email not configured" });
     }
+
+    const adminCol = db.collection("adminSettings");
+    const admin = await adminCol.findOne({ username: "admin" });
+
+    if (!admin) {
+      return res.status(500).json({ error: "Admin not initialized" });
+    }
+
+    // Generate OTP (6-digit string)
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+    // 👉 Save OTP in MongoDB on the admin document
+    await adminCol.updateOne(
+      { _id: admin._id },
+      {
+        $set: {
+          otp,
+          otpExpiresAt: expiresAt,
+          updatedAt: new Date(),
+        },
+      }
+    );
+
+    // Send email
+    await emailTransporter.sendMail({
+      from: `"Mystery Smile" <${process.env.EMAIL_USER}>`,
+      to: adminEmail,
+      subject: "Admin Password OTP",
+      html: `
+        <h2>Admin Password OTP</h2>
+        <p>Your OTP is:</p>
+        <h1>${otp}</h1>
+        <p>This OTP is valid for 5 minutes.</p>
+      `,
+    });
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error("FORGOT PASSWORD ERROR:", err);
+    return res.status(500).json({ error: "Failed to send OTP" });
   }
-);
+});
+
+
+
+/* ============================================
+   ADMIN RESET PASSWORD (VERIFY OTP)
+============================================ */
+app.post("/api/admin/reset-password", async (req, res) => {
+  try {
+    const { otp, newPassword } = req.body;
+const otpFromClient = (otp || "").toString().trim();
+
+if (!otpFromClient || !newPassword) {
+  return res
+    .status(400)
+    .json({ error: "OTP and new password required" });
+}
+
+const adminCol = db.collection("adminSettings");
+const admin = await adminCol.findOne({ username: "admin" });
+
+if (
+  !admin ||
+  !admin.otp ||
+  admin.otp.toString().trim() !== otpFromClient ||
+  !admin.otpExpiresAt ||
+  new Date() > new Date(admin.otpExpiresAt)
+) {
+  return res.status(400).json({ error: "Invalid or expired OTP" });
+}
+
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+
+    await adminCol.updateOne(
+      { _id: admin._id },
+      {
+        $set: {
+          passwordHash,
+          updatedAt: new Date(),
+        },
+        $unset: {
+          otp: "",
+          otpExpiresAt: "",
+        },
+      }
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Reset password error:", err);
+    res.status(500).json({ error: "Failed to reset password" });
+  }
+});
 
 
 /* ============================================
@@ -666,6 +730,8 @@ app.post("/api/bookings", async (req, res) => {
       priceUsd,
       priceNpr,
       priceInr,
+      paymentMethod:
+    doc.paymentMethod || doc.payment?.type || "Unknown",
       status: doc.status,
     };
 
@@ -777,6 +843,68 @@ app.post("/api/services", async (req, res) => {
     res.status(500).json({ error: "Failed to create service" });
   }
 });
+
+/* ============================================
+   SECURE: CHANGE PASSWORD WITH OTP + CURRENT PASSWORD
+============================================ */
+app.post("/api/admin/change-password-secure", adminAuthMiddleware, async (req, res) => {
+  try {
+    const { currentPassword, newPassword, otp } = req.body;
+    const otpFromClient = (otp || "").toString().trim();
+
+    if (!currentPassword || !newPassword || !otp) {
+      return res.status(400).json({ error: "All fields required" });
+    }
+
+    const col = db.collection("adminSettings");
+    const admin = await col.findOne({ username: "admin" });
+
+    if (!admin) {
+      return res.status(500).json({ error: "Admin not initialized" });
+    }
+
+    // Verify OTP
+if (
+  !admin.otp ||
+  admin.otp.toString().trim() !== otpFromClient ||
+  !admin.otpExpiresAt ||
+  new Date() > new Date(admin.otpExpiresAt)
+) {
+  return res.status(400).json({ error: "Invalid or expired OTP" });
+}
+
+
+    // Verify current password
+    const match = await bcrypt.compare(currentPassword, admin.passwordHash);
+    if (!match) {
+      return res.status(401).json({ error: "Current password is incorrect" });
+    }
+
+    // Update password
+    const newHash = await bcrypt.hash(newPassword, 10);
+
+    await col.updateOne(
+      { _id: admin._id },
+      {
+        $set: {
+          passwordHash: newHash,
+          updatedAt: new Date(),
+        },
+        $unset: {
+          otp: "",
+          otpExpiresAt: "",
+        },
+      }
+    );
+
+    res.json({ success: true });
+
+  } catch (err) {
+    console.error("Secure change password error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 
 // UPDATE service + sync all bookings for that service
 app.put("/api/services/:id", async (req, res) => {
